@@ -1,66 +1,34 @@
-## Foundry
+# 🛡️ Multisig
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+Simple multisig wallet implementation.
 
-Foundry consists of:
+![Solidity](https://img.shields.io/badge/Solidity-0.8.28-blue)
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+## Features
 
-## Documentation
+- **Transaction management** - submit, approve, and execute transactions
+- **Multi-owner management** - invite, accept, renounce ownership with a 2-step proccess
+- **Secure** - uses Solidity's security best practices
+- **Easy to read** - built with code readability & gas optimizations in mind
 
-https://book.getfoundry.sh/
+## Testing
 
-## Usage
+This project uses [Foundry](https://book.getfoundry.sh/) for testing and coverage.
 
-### Build
+To run the tests:
 
-```shell
-$ forge build
+```bash
+forge test
 ```
 
-### Test
+To check code coverage:
 
-```shell
-$ forge test
+```bash
+forge coverage
 ```
 
-### Format
+To run the tests with gas report:
 
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+```bash
+forge test --gas-report
 ```
