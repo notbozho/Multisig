@@ -7,8 +7,7 @@ import { Multisig } from "src/Multisig.sol";
 
 // Every path twice
 // Different order of calls
-contract MultisigTest is Test { 
-
+contract MultisigTest is Test {
     Multisig public multisig;
     address public initialOwner;
 
@@ -17,7 +16,7 @@ contract MultisigTest is Test {
         multisig = new Multisig();
     }
 
-    // deployer SHOULD be an owner 
+    // deployer SHOULD be an owner
     function test_initial_owner() public {
         assertTrue(multisig.isOwner(initialOwner));
     }
@@ -29,12 +28,14 @@ contract MultisigTest is Test {
 
         vm.prank(initialOwner);
         vm.expectEmit(true, true, true, false);
-        emit Multisig.OwnerInvited(newOwner, uint48(block.timestamp + 14 days), initialOwner);
+        emit Multisig.OwnerInvited(
+            newOwner, uint48(block.timestamp + 14 days), initialOwner
+        );
 
         multisig.addOwner(newOwner);
 
         vm.prank(newOwner);
-        vm.expectEmit(true, true, false ,false);
+        vm.expectEmit(true, true, false, false);
         emit Multisig.NewOwner(newOwner, initialOwner);
         multisig.acceptOwnership();
 
@@ -50,13 +51,19 @@ contract MultisigTest is Test {
 
         vm.prank(initialOwner);
         vm.expectEmit(true, true, true, false);
-        emit Multisig.OwnerInvited(newOwner, uint48(block.timestamp + 14 days), initialOwner);
+        emit Multisig.OwnerInvited(
+            newOwner, uint48(block.timestamp + 14 days), initialOwner
+        );
 
         multisig.addOwner(newOwner);
         skip(14 days + 1);
 
         vm.prank(newOwner);
-        vm.expectRevert(abi.encodeWithSelector(Multisig.OwnerInviteExpired.selector, newOwner, shouldExpireAt));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Multisig.OwnerInviteExpired.selector, newOwner, shouldExpireAt
+            )
+        );
         multisig.acceptOwnership();
 
         assertFalse(multisig.isOwner(newOwner));
@@ -68,9 +75,11 @@ contract MultisigTest is Test {
         assertFalse(multisig.isOwner(newOwner));
 
         vm.prank(newOwner);
-        vm.expectRevert(abi.encodeWithSelector(Multisig.OwnerNotInvited.selector, newOwner));
+        vm.expectRevert(
+            abi.encodeWithSelector(Multisig.OwnerNotInvited.selector, newOwner)
+        );
         multisig.acceptOwnership();
-    
+
         assertFalse(multisig.isOwner(newOwner));
     }
 
@@ -89,7 +98,7 @@ contract MultisigTest is Test {
 
         assertFalse(multisig.isOwner(newOwner));
     }
-    
+
     // should REVERT when the only one left owner tries to renounce his ownership
     function test_renounce_ownership_one_owner() public {
         assertTrue(multisig.isOwner(initialOwner));
@@ -130,8 +139,9 @@ contract MultisigTest is Test {
         multisig.acceptOwnership();
     }
 
-    function submitTransaction(address recipient, uint256 value, bytes memory data) internal {
+    function submitTransaction(address recipient, uint256 value, bytes memory data)
+        internal
+    {
         multisig.submitTransaction(recipient, value, data);
-
-    }   
+    }
 }

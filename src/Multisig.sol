@@ -6,7 +6,6 @@ pragma solidity ^0.8.28;
 /// @notice Simple multisig wallet with owner management and transaction approvals
 /// @dev Owners can submit, approve, unapprove, and execute transactions
 contract Multisig {
-
     // =================== Structs ===================
 
     struct Transaction {
@@ -125,17 +124,15 @@ contract Multisig {
         }
 
         uint48 expiresAt = uint48(block.timestamp) + PENDING_OWNER_DURATION;
-        pendingOwners[user] = PendingOwner({
-            invitedBy: msg.sender,
-            expiresAt: expiresAt
-        });
+        pendingOwners[user] =
+            PendingOwner({ invitedBy: msg.sender, expiresAt: expiresAt });
 
         emit OwnerInvited(user, expiresAt, msg.sender);
     }
 
     function acceptOwnership() external {
         PendingOwner memory _pending = pendingOwners[msg.sender];
-        
+
         if (_pending.expiresAt == 0) {
             revert OwnerNotInvited(msg.sender);
         }
@@ -292,9 +289,7 @@ contract Multisig {
         return address(this).balance;
     }
 
-    receive() external payable {}
+    receive() external payable { }
 
-    fallback() external payable {}
-
-
+    fallback() external payable { }
 }
