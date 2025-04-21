@@ -1,7 +1,14 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
+/// @title Multisig
+/// @author notbozho
+/// @notice Simple multisig wallet with owner management and transaction approvals
+/// @dev Owners can submit, approve, unapprove, and execute transactions
 contract Multisig {
+
+    // =================== Structs ===================
+
     struct Transaction {
         address to; // recipient
         uint256 value; // native funds transfered
@@ -16,6 +23,8 @@ contract Multisig {
         uint48 expiresAt; // uint48 so it saves 1 storage slot => less gas
     }
 
+    // =================== State Variables ===================
+
     uint48 public constant PENDING_OWNER_DURATION = 14 days;
 
     uint256 public nonce;
@@ -27,6 +36,8 @@ contract Multisig {
 
     mapping(address => bool) public isOwner;
     mapping(address => PendingOwner) public pendingOwners;
+
+    // =================== Events ===================
 
     event OwnerInvited(address indexed user, uint48 expiresAt, address indexed invitedBy);
     event NewOwner(address indexed user, address indexed invitedBy);
@@ -52,11 +63,13 @@ contract Multisig {
         bytes32 indexed txHash, address indexed owner, bool isTxDeleted
     );
 
+    // =================== Errors ===================
+
     error InvalidParameter(string param);
 
     error NotOwner();
+    error OwnerNotInvited(address user);
     error OwnerInviteExpired(address user, uint48 expiredAt);
-    error OwnerAlreadyInvited(address user, uint48 expiresAt);
     error UserAlreadyOwner(address user);
 
     error TxNotFound(bytes32 txHash);
@@ -68,6 +81,8 @@ contract Multisig {
         bytes32 txHash, uint256 currentApprovals, uint256 requiredApprovals
     );
     error TxFailed(bytes32 txHash, bytes result);
+
+    // =================== Modifiers ===================
 
     modifier onlyOwner() {
         if (!isOwner[msg.sender]) {
@@ -91,6 +106,8 @@ contract Multisig {
         _;
     }
 
+    // =================== Functions ===================
+
     constructor() {
         isOwner[msg.sender] = true;
     }
@@ -107,19 +124,22 @@ contract Multisig {
             revert UserAlreadyOwner(user);
         }
 
-        PendingOwner memory _pending = pendingOwners[user];
-        if (_pending.expiresAt > 0 && _pending.expiresAt >= block.timestamp) {
-            revert OwnerAlreadyInvited(user, _pending.expiresAt);
-        }
-
+        uint48 expiresAt = uint48(block.timestamp) + PENDING_OWNER_DURATION;
         pendingOwners[user] = PendingOwner({
             invitedBy: msg.sender,
-            expiresAt: uint48(block.timestamp) + PENDING_OWNER_DURATION
+            expiresAt: expiresAt
         });
+
+        emit OwnerInvited(user, expiresAt, msg.sender);
     }
 
     function acceptOwnership() external {
         PendingOwner memory _pending = pendingOwners[msg.sender];
+        
+        if (_pending.expiresAt == 0) {
+            revert OwnerNotInvited(msg.sender);
+        }
+
         if (_pending.expiresAt < block.timestamp) {
             revert OwnerInviteExpired(msg.sender, _pending.expiresAt);
         }
@@ -132,7 +152,7 @@ contract Multisig {
     }
 
     function renounceOwnership() external onlyOwner {
-        require(minimumApprovals == 1, "min 1 owner is required");
+        require(minimumApprovals > 1, "min 1 owner is required");
 
         delete isOwner[msg.sender];
         minimumApprovals--;
@@ -235,7 +255,7 @@ contract Multisig {
         transactions[txHash].executed = true;
 
         // CEI pattern
-        (bool success, bytes memory result) = _tx.to.call{value: _tx.value}(_tx.data);
+        (bool success, bytes memory result) = _tx.to.call{ value: _tx.value }(_tx.data);
         if (!success) revert TxFailed(txHash, result);
 
         emit TransactionExecuted(
@@ -271,4 +291,10 @@ contract Multisig {
     function balance() public view returns (uint256) {
         return address(this).balance;
     }
+
+    receive() external payable {}
+
+    fallback() external payable {}
+
+
 }
