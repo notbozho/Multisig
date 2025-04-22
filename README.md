@@ -3,7 +3,7 @@
 Simple multisig wallet implementation.
 
 ![Coverage](https://img.shields.io/badge/Coverage-98.33%25-brightgreen?style=flat-square)
-![Solidity](https://img.shields.io/badge/Solidity-0.8.28-blue)
+![Solidity](https://img.shields.io/badge/Solidity-0.8.28-blue?style=flat-square)
 
 ## Features
 
