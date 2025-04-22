@@ -225,14 +225,6 @@ contract Multisig {
         }
 
         bytes32 txHash = getTxHash(recipient, value, data, nonce);
-        Transaction memory _tx = transactions[txHash];
-
-        if (_tx.executed) {
-            revert TxAlreadyExecuted(txHash);
-        }
-        if (_tx.approvals > 0) {
-            revert TxAlreadySubmitted(txHash);
-        }
 
         transactions[txHash] = Transaction({
             to: recipient,
