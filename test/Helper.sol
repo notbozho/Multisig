@@ -5,7 +5,6 @@ import { Test } from "forge-std/Test.sol";
 import { Multisig } from "src/Multisig.sol";
 
 contract Helper is Test {
-
     Multisig public multisig;
     address public initialOwner;
 
@@ -60,5 +59,4 @@ contract Helper is Test {
 
         return executed;
     }
-
 }

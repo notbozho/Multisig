@@ -5,7 +5,6 @@ import { Helper } from "test/Helper.sol";
 import { Multisig } from "src/Multisig.sol";
 
 contract MultisigTest is Helper {
-
     function setUp() public override {
         super.setUp();
     }
@@ -81,16 +80,20 @@ contract MultisigTest is Helper {
         addOwner(newOwner);
 
         assertTrue(multisig.isOwner(newOwner));
-        
+
         vm.prank(initialOwner);
-        vm.expectRevert(abi.encodeWithSelector(Multisig.UserAlreadyOwner.selector, newOwner));
+        vm.expectRevert(
+            abi.encodeWithSelector(Multisig.UserAlreadyOwner.selector, newOwner)
+        );
         multisig.addOwner(newOwner);
     }
 
     // should REVERT if trying to invite zero address
     function test_twostep_ownership_zero_address() public {
         vm.prank(initialOwner);
-        vm.expectRevert(abi.encodeWithSelector(Multisig.InvalidParameter.selector, "user"));
+        vm.expectRevert(
+            abi.encodeWithSelector(Multisig.InvalidParameter.selector, "user")
+        );
         multisig.addOwner(address(0));
     }
 
@@ -216,7 +219,9 @@ contract MultisigTest is Helper {
     function test_submitTransaction_own_address() public {
         vm.prank(initialOwner);
 
-        vm.expectRevert(abi.encodeWithSelector(Multisig.InvalidParameter.selector, "recipient"));
+        vm.expectRevert(
+            abi.encodeWithSelector(Multisig.InvalidParameter.selector, "recipient")
+        );
         submitTransaction(address(multisig), 123, "");
     }
 
@@ -403,7 +408,7 @@ contract MultisigTest is Helper {
         // large amount so it fails
         bytes32 txHash = submitTransaction(address(0x123), multisig.balance() + 1, "");
         vm.stopPrank();
-         
+
         vm.prank(newOwner);
         approveTransaction(txHash);
 
@@ -449,6 +454,4 @@ contract MultisigTest is Helper {
     function test_balance() public {
         assertEq(multisig.balance(), address(multisig).balance);
     }
-
-
 }
