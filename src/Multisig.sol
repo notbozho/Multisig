@@ -13,7 +13,7 @@ contract Multisig {
         address to; // recipient
         uint256 value; // native funds transfered
         bytes data; // additional data
-        uint256 approvals; // number of approvals
+        uint48 approvals; // number of approvals
         bool executed; // is executed
         uint256 nonce;
     }
@@ -150,7 +150,7 @@ contract Multisig {
     // =================== Functions ===================
 
     /// @notice Initializes the contract with the deployer as the first owner
-    constructor() {
+    constructor() payable {
         isOwner[msg.sender] = true;
     }
 
@@ -168,8 +168,7 @@ contract Multisig {
         }
 
         uint48 expiresAt = uint48(block.timestamp) + PENDING_OWNER_DURATION;
-        pendingOwners[user] =
-            PendingOwner({ invitedBy: msg.sender, expiresAt: expiresAt });
+        pendingOwners[user] = PendingOwner(msg.sender, expiresAt);
 
         emit OwnerInvited(user, expiresAt, msg.sender);
     }
@@ -189,7 +188,10 @@ contract Multisig {
         }
 
         isOwner[msg.sender] = true;
-        minimumApprovals++;
+        // safe
+        unchecked {
+            ++minimumApprovals;
+        }
         delete pendingOwners[msg.sender];
 
         emit NewOwner(msg.sender, _pending.invitedBy);
@@ -200,11 +202,13 @@ contract Multisig {
      * @dev At least one owner must remain
      */
     function renounceOwnership() external onlyOwner {
-        require(minimumApprovals > 1, "min 1 owner is required");
+        require(minimumApprovals >= 2, "min 1 owner is required");
 
         delete isOwner[msg.sender];
-        minimumApprovals--;
-
+        // safe, it will be equal to atleast 2
+        unchecked {
+            --minimumApprovals;
+        }
         emit OwnerRenounced(msg.sender);
     }
 
@@ -226,17 +230,13 @@ contract Multisig {
 
         bytes32 txHash = getTxHash(recipient, value, data, nonce);
 
-        transactions[txHash] = Transaction({
-            to: recipient,
-            value: value,
-            data: data,
-            approvals: 1,
-            executed: false,
-            nonce: nonce
-        });
+        transactions[txHash] = Transaction(recipient, value, data, 1, false, nonce);
 
         approvedBy[txHash][msg.sender] = true;
-        nonce++;
+        // safe
+        unchecked {
+            ++nonce;
+        }
 
         emit TransactionSubmitted(msg.sender, txHash, recipient, value, data);
 
@@ -257,9 +257,15 @@ contract Multisig {
             revert TxAlreadyApproved(txHash, msg.sender);
         }
 
-        approvedBy[txHash][msg.sender] = true;
-        transactions[txHash].approvals++;
+        if (transactions[txHash].executed) {
+            revert TxAlreadyExecuted(txHash);
+        }
 
+        approvedBy[txHash][msg.sender] = true;
+        // safe
+        unchecked {
+            ++transactions[txHash].approvals;
+        }
         emit TransactionApproved(txHash, msg.sender);
     }
 
@@ -278,15 +284,17 @@ contract Multisig {
         }
 
         delete approvedBy[txHash][msg.sender];
-        transactions[txHash].approvals--;
+        unchecked {
+            --transactions[txHash].approvals;
+        }
 
-        if (transactions[txHash].approvals == 0) {
+        // cache to save storage reads
+        uint256 txApprovals = transactions[txHash].approvals;
+        if (txApprovals == 0) {
             delete transactions[txHash];
         }
 
-        emit TransactionUnapproved(
-            txHash, msg.sender, transactions[txHash].approvals == 0
-        );
+        emit TransactionUnapproved(txHash, msg.sender, txApprovals == 0);
     }
 
     /**
@@ -345,13 +353,7 @@ contract Multisig {
     function getTransaction(bytes32 txHash)
         public
         view
-        returns (
-            address recipient,
-            uint256 value,
-            bytes memory data,
-            uint256 approvals,
-            bool executed
-        )
+        returns (address, uint256, bytes memory, uint256, bool)
     {
         Transaction memory _tx = transactions[txHash];
         return (_tx.to, _tx.value, _tx.data, _tx.approvals, _tx.executed);
