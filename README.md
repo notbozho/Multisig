@@ -2,6 +2,7 @@
 
 Simple multisig wallet implementation.
 
+![Wakatime](https://wakatime.com/badge/user/d7b1cfc2-9b38-407f-ae0e-34a88f03ff8e/project/f051e218-58a0-4767-bb28-e1a87a15b9f5.svg?style=flat-square)
 ![Coverage](https://img.shields.io/badge/Coverage-98.33%25-brightgreen?style=flat-square)
 ![Solidity](https://img.shields.io/badge/Solidity-0.8.28-blue?style=flat-square)
 
